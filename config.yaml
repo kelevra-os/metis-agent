@@ -1,0 +1,24 @@
+# Metis Agent Profile — Hermes Configuration
+profile: metis
+provider: deepseek-v4-flash
+provider_endpoint: ollama-cloud
+
+gateway_timeout: 1800
+
+tools:
+  - file
+  - web
+  - search
+  - memory
+  - skills
+  - cron
+  - delegation
+
+tts:
+  engine: edge-tts
+  voice: en-US-JennyNeural
+
+env:
+  HERMES_PROFILE: metis
+  OBSIDIAN_VAULT_PATH: ""
+  OBSIDIAN_REPO_URL: ""
