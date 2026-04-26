@@ -1,24 +1,33 @@
-# Metis Agent Profile — Hermes Configuration
-profile: metis
-provider: deepseek-v4-flash
-provider_endpoint: ollama-cloud
+# Metis Agent — Profile Configuration
+# A warm, curious, reflective thinking partner for Hermes Agent.
+#
+# Installed by: curl -fsSL https://raw.githubusercontent.com/kelevra-os/metis-agent/main/install.sh | bash
+
+profile:
+  name: "metis"
+  description: "Warm, curious, reflective thinking partner"
+
+provider:
+  name: "deepseek-v4-flash"
+  provider: "ollama-cloud"
+
+tts:
+  provider: "edge"       # Free, no API key needed
+  voice: "en-US-JennyNeural"
+
+tools:
+  enabled:
+    - file
+    - web
+    - search
+    - memory
+    - skills
+    - cron
+    - delegation
+    - vision
+    - terminal
+  disabled: []
 
 gateway_timeout: 1800
 
-tools:
-  - file
-  - web
-  - search
-  - memory
-  - skills
-  - cron
-  - delegation
-
-tts:
-  engine: edge-tts
-  voice: en-US-JennyNeural
-
-env:
-  HERMES_PROFILE: metis
-  OBSIDIAN_VAULT_PATH: ""
-  OBSIDIAN_REPO_URL: ""
+env_file: "~/.hermes/profiles/metis/.env"
