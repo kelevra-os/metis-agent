@@ -1,329 +1,300 @@
 ---
 name: metis-wormhole-intake
-description: Accept Wormhole, Send, or direct file links, download, process content, present summary, and optionally save to the Obsidian vault as a source note.
-tags: ['intake', 'wormhole', 'send', 'file-ingestion', 'obsidian']
+description: Accept files shared via Wormhole or Send links, download them, process the content (PDF, image, text, audio), summarize it for the user, and optionally save structured notes to the Obsidian vault.
 ---
 
-# metis-wormhole-intake
+# Metis Wormhole / Send File Intake
 
-Accept a Wormhole (`wormhole://`), Send (`send://` / `send.vis.ee`), or direct
-file URL, download the file, determine the type, extract the content, present a
-readable summary to the user, and optionally write a source note to the Obsidian
-vault.
+## Purpose
+
+Securely accept files sent via Wormhole or Send Protocol links, process them into usable content, and optionally save summaries and key points to the Obsidian vault. Designed for Metis's role as a warm, Socratic thinking partner — the goal is understanding what the file contains and connecting it to your thinking, not just storing bytes.
 
 ## When to Use
 
-- The user shares a Wormhole link (`wormhole://...` or `https://wormhole.app/...`)
-- The user shares a Send link (`https://send.vis.ee/...` or similar ffsend/Send URL)
-- The user shares a direct file URL (`https://example.com/file.pdf`)
-- The user says "I have a file for you" or "I sent you a file" with a link
-- The user asks you to process a shared document, image, or archive
+- Ru or someone shares a Wormhole link like `https://wormhole.app/XXXX#YYYY`
+- Someone shares a Send / ffsend link
+- A direct file URL arrives in chat and needs local capture
+- The file needs processing: PDF extraction, image OCR, text analysis
 
-## Prerequisites
+**Do NOT rely on this skill for:** voice memos or audio transcription (tagged as future capability), or for files that can simply be fetched with `curl` / `wget` (use `url-file-intake` for those).
 
-- **ffsend** — for Send/ffsend links. Install if missing:
+## Metis Personality for This Skill
 
-  ```bash
-  # cargo
-  cargo install ffsend
-  # or using the static binary
-  curl -sL https://github.com/timvisee/ffsend/releases/latest/download/ffsend-x86_64-unknown-linux-gnu -o ~/.local/bin/ffsend && chmod +x ~/.local/bin/ffsend
-  ```
+When processing files, speak in your warm, conversational voice:
 
-- **pdftotext** (poppler-utils) — for PDF text extraction: `sudo apt install poppler-utils`
-- **tesseract-ocr** — for OCR on images: `sudo apt install tesseract-ocr`
-- **pandoc** — for document format conversion: `sudo apt install pandoc`
-- **OBSIDIAN_VAULT_PATH** — only needed when saving to vault (set in `.env` or `config.yaml`)
+- **After download**: "I've got the file — let me take a look inside."
+- **After processing**: "Here's what I found... Does any of this feel worth saving?"
+- **When saving**: "Let me tuck this into your vault so you can find it later."
+- **For known domains**: "Ah, this looks like a paper from your research queue — I'll handle it the same way I've done before."
 
-The skill itself handles fallbacks gracefully — if a tool is unavailable, report
-what content you could extract and note the limitation.
+Avoid dry, technical play-by-play of the pipeline. The user sees the result, not the gears.
 
 ## Workflow
 
-### Step 1 — Identify the provider
+### Step 1: Identify the link type
 
-| Pattern | Provider | Tool |
-|---------|----------|------|
-| `wormhole://`, `https://wormhole.app/` | Wormhole | Browser download or wget/curl |
-| `send://`, `https://send.vis.ee/`, `https://send.vis.ee/#` | Send / ffsend | `ffsend download` |
-| `https://` direct file URL | Direct URL | `curl -LO` or `wget` |
-| Other share link | Inspect and ask | — |
+When the user shares a URL, quickly classify it:
 
-### Step 2 — Download to a known location
+| Pattern | Provider | Strategy |
+|---------|----------|----------|
+| `wormhole.app/...` or `wormhole.com/...` | Wormhole | Camofox browser download |
+| Contains `send.vis.ee`, `send` in host | Send / ffsend | `ffsend` CLI (preferred) or Camofox fallback |
+| `arxiv.org/abs/...` or `arxiv.org/pdf/...` | arXiv | Use arxiv skill for metadata + PDF |
+| `youtube.com/...`, `youtu.be/...` | YouTube | Use youtube-content skill |
+| `twitter.com/...`, `x.com/...` | Twitter/X | Use twitter-to-markdown skill |
+| Any other direct file URL | Direct | Use url-file-intake or curl/wget |
 
-Use `/home/hermes/intake/` as the download target (create if it doesn't exist):
-
-```bash
-mkdir -p /home/hermes/intake
-```
-
-**For Send/ffsend links:**
-```bash
-ffsend -Iy download -o /home/hermes/intake/ '<share-url>'
-```
-If the URL includes a password fragment, pass `--password <fragment>` or let
-ffsend handle it automatically when the fragment is in the URL.
+### Step 2: Download the file
 
 **For Wormhole links:**
-- Open in browser via `browser_navigate` and click the download button
-- The download typically lands in `/tmp/camofox-download-*` or can be captured
-  via the browser's download API
-- Fallback: `curl -L -o /home/hermes/intake/ '<wormhole-url>'` for direct
-  download links
+Use the Camofox browser pipeline. The intake script lives at `~/.hermes/scripts/wormhole-intake.py` within the Hermes agent environment (not Metis-specific). Metis can invoke it from the system Hermes install:
+
+```bash
+# Ensure Camofox is running
+docker ps | grep camofox
+
+# Run the intake script from the Hermes agent venv
+~/.hermes/hermes-agent/venv/bin/python ~/.hermes/scripts/wormhole-intake.py \
+  "https://wormhole.app/XXXX#YYYY" \
+  --intake-dir /home/hermes/intake
+```
+
+If Camofox is unavailable or fails, fall back to Hermes browser tools (`browser_navigate`, `browser_snapshot`, `browser_click`) to navigate the Wormhole page and trigger the download.
+
+**For Send / ffsend links:**
+Prefer the CLI:
+
+```bash
+ffsend download -I -o /home/hermes/intake/ '<share-url>'
+```
+
+If `ffsend` is not installed, try a Camofox browser approach as fallback.
 
 **For direct file URLs:**
-```bash
-curl -L -o /home/hermes/intake/<filename> '<url>'
-```
+Use `url-file-intake` approach — download with curl/wget to `/home/hermes/intake/`.
 
-After download, verify:
-- File exists at the target path
-- File size is nonzero
-- Record the filename, size, and MIME type
+**For arXiv, YouTube, Twitter:**
+Use the respective integration skills to fetch content directly, bypassing the file-download pipeline.
 
-```bash
-file --mime-type -b /home/hermes/intake/<filename>
-stat --format='%s' /home/hermes/intake/<filename>
-```
+### Step 3: Verify the download
 
-### Step 3 — Determine file type
-
-Use the `file` command to get the MIME type, then map to a handler:
+Confirm the file exists, is non-zero, and is readable:
 
 ```bash
-MIME=$(file --mime-type -b /home/hermes/intake/<filename>)
-```
-
-### Step 4 — Process content
-
-Dispatch based on MIME type:
-
-#### PDF (`application/pdf`)
-```bash
-# Extract text
-pdftotext /home/hermes/intake/<filename> - | head -500
-# Also report page count
-pdfinfo /home/hermes/intake/<filename> | grep Pages
-```
-Present: first ~500 lines of extracted text, page count, and a brief summary
-of what the document appears to cover.
-
-#### Image (`image/png`, `image/jpeg`, `image/webp`, `image/gif`, etc.)
-Use `vision_analyze` on the local file path to get OCR/description:
-```
-vision_analyze(image_url='/home/hermes/intake/<filename>',
-               question='Extract all visible text and describe the content.')
-```
-Present: extracted text (if any), a visual description, and key objects/people
-identified. For screenshots or diagrams, include the structural layout.
-
-#### Plain text (`text/plain`)
-Read the file directly with `read_file`:
-```
-read_file(path='/home/hermes/intake/<filename>', limit=200)
-```
-Present: first 200 lines (or full file if shorter), character encoding, and a
-brief content summary.
-
-#### Markdown (`text/markdown`)
-Read and optionally render as formatted output. Present the content with
-headings, links, and structure preserved.
-
-#### HTML (`text/html`)
-Extract readable text with `pandoc`:
-```bash
-pandoc /home/hermes/intake/<filename> -t plain | head -500
-```
-
-#### Office documents (docx, xlsx, pptx) — `application/vnd.*`
-```bash
-# docx → plain text
-pandoc /home/hermes/intake/<filename> -t plain | head -500
-```
-For spreadsheets, note that full extraction may be limited; present the
-first few rows conceptually.
-
-#### Archives (zip, tar, gz)
-List contents but do not auto-extract:
-```bash
-unzip -l /home/hermes/intake/<filename>   # for zip
-tar tf /home/hermes/intake/<filename>      # for tar.*
-```
-Ask the user if they want extraction before proceeding.
-
-#### Audio / Video
-Note that audio and video processing is not yet fully supported in this skill.
-Present basic metadata:
-```bash
+ls -lh /home/hermes/intake/
 file /home/hermes/intake/<filename>
-ffprobe -v quiet -print_format json -show_format /home/hermes/intake/<filename> 2>/dev/null | head -30
-```
-Tell the user: *"Audio/video content processing is planned but not yet
-implemented. The file is saved at <path> for later use."*
-
-#### Unknown / binary
-Report the MIME type and file size. Ask the user how they'd like to proceed.
-
-### Step 5 — Present a summary to the user
-
-Format the summary clearly. Include:
-
-```
-📄 **File:** <filename>
-📏 **Size:** <human-readable size>
-🏷️ **Type:** <MIME type>
-📝 **Content summary:** <2-3 sentence overview>
-
-<extracted content preview>
-
-**Key items of interest:**
-- Point 1
-- Point 2
-...
 ```
 
-### Step 6 — Ask about saving to Obsidian
+If the download failed, report the error conversationally and suggest retrying or using an alternative share method.
 
-After presenting the summary, ask:
+### Step 4: Determine file type and process content
 
-> "Would you like me to save a source note for this in your Obsidian vault?"
+Classify by MIME type or extension:
 
-If yes, proceed to Step 7.
-If no, note that the file remains at `/home/hermes/intake/<filename>` if they
-want to reference it later. (Cleanup is automatic — the intake folder is
-ephemeral by design.)
+#### PDF files
+Extract text with pdfplumber (from the Hermes agent venv):
 
-### Step 7 — Save to Obsidian (via metis-obsidian)
+```python
+import pdfplumber, json
+with pdfplumber.open("/home/hermes/intake/<file>.pdf") as pdf:
+    pages = len(pdf.pages)
+    # Extract first few pages for summary
+    text = "\n".join(
+        pdf.pages[i].extract_text() or ""
+        for i in range(min(5, pages))
+    )
+```
 
-Use the `metis-obsidian` skill to create a source note. The template is at
-`metis-obsidian/templates/source-note.md` — render it with the extracted
-content:
+Present: document title (from first content page), page count, first few lines of content, key themes you can detect.
+
+#### Images (PNG, JPG, JPEG, WEBP, GIF)
+Use OCR to extract text. The agent has vision tools available — use `vision_analyze` on the image file to get a description and extract any visible text.
+
+If tesseract is available on the system:
 
 ```bash
-VAULT="${OBSIDIAN_VAULT_PATH:-$HOME/Documents/Obsidian Vault}"
-NOTES_DIR="$VAULT/sources/Intake"
-mkdir -p "$NOTES_DIR"
-
-# Derive a clean title from the filename
-TITLE="<Clean Filename Without Extension>"
-DATE=$(date +%Y-%m-%d)
-SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//;s/-$//')
-FILEPATH="$NOTES_DIR/$DATE-$SLUG.md"
+tesseract /home/hermes/intake/<image>.png /home/hermes/intake/<image>-ocr-output 2>/dev/null
+cat /home/hermes/intake/<image>-ocr-output.txt
 ```
 
-Write the note with frontmatter and content:
+Present: what the image shows, extracted text if any, notable visual elements.
 
-```markdown
+#### Text files (TXT, MD, CSV, JSON, LOG)
+Read directly with `read_file`. For long files, read the first 100-200 lines and summarize.
+
+Present: file type, line count, first few lines, key topics detected, any patterns or data worth noting.
+
+#### Markdown files
+Read and render the content. If it appears to be a structured document (meeting notes, research notes, etc.), note the structure (headings, lists, links).
+
+#### Audio files (MP3, WAV, OGG, M4A, FLAC)
+Note to the user: "I've received the audio file, but voice transcription isn't wired up yet. I've saved it to your intake folder — when audio processing arrives, I can transcribe and summarize it." Save the file path for future processing.
+
+#### Archives (ZIP, TAR, GZ)
+List contents:
+
+```bash
+unzip -l /home/hermes/intake/<file>.zip 2>/dev/null | head -30
+# or
+tar tf /home/hermes/intake/<file>.tar.gz 2>/dev/null | head -30
+```
+
+Present: archive contents, number of files, notable filenames. Ask if they want it extracted.
+
+#### Other / unknown
+Report the file type from `file` command and size. Ask what they'd like to do.
+
+### Step 5: Present a summary to the user
+
+In your warm Metis voice, share:
+
+- **What it is**: filename, type, size
+- **What's inside**: a concise, readable summary of the content
+- **Key takeaways**: 2-4 bullet points of the most important or interesting content
+- **Connections**: if the content relates to anything in their Obsidian vault or past conversations, mention it
+
+Example:
+
+> I've pulled down that paper you shared — *"Building Agentic AI Systems"* by Biswas (2025, Packt). It's 380 pages covering agent architectures, tool-use patterns, and multi-agent coordination. The opening chapters lay out a nice taxonomy of agent autonomy levels that feels relevant to your Metis work. Want me to save the key frameworks to your vault?
+
+### Step 6: Ask about saving to Obsidian
+
+Always offer to save. Phrase it naturally:
+
+- "Would you like me to save a summary of this to your vault?"
+- "Want me to capture the key points in Obsidian?"
+- "I can write a source note for this — shall I?"
+
+If they say yes, proceed to Step 7. If no, acknowledge and move on.
+
+### Step 7: Save to Obsidian (using metis-obsidian skill)
+
+Use the `metis-obsidian` skill to write a structured source note. Follow the `source-note.md` template:
+
+```
 ---
 created: {{date}}
-tags: [source, reference, intake]
-source_url: {{original_url}}
-file_path: /home/hermes/intake/{{filename}}
-file_type: {{MIME type}}
+tags: [source, reference, ingested]
+source_url: {{url}}
+source_type: pdf|image|text|audio|archive|other
 ---
 
 # {{title}}
 
 **Source:** {{url}}
-**Intake date:** {{date}}
-**Type:** {{MIME type}}
-**Size:** {{human_size}}
+**Author:** {{author if known}}
+**File:** {{path to file in intake}}
 
 ## Summary
 
-{{2-3 sentence content summary}}
+{{concise summary of the content}}
 
-## Key Content
+## Key Points
 
-{{extracted key points, structured}}
+- {{point 1}}
+- {{point 2}}
+- {{point 3}}
+...
 
-## Raw Preview
+## Notable Quotes
 
-```
-{{first 100 lines or key excerpts}}
-```
+> {{quote 1}}
+
+> {{quote 2}}
 
 ## Connections
 
-- Intake source note
-- Add related tags or links to existing notes if relevant
+- Relates to [[{{related_topic}}]]
+- Relevant to [[{{project}}]]
 ```
 
-Then commit and push via the metis-obsidian workflow:
+The note goes into the vault configured in Metis's `.env` file.
 
-```bash
-cd "$VAULT"
-git add "$FILEPATH"
-git commit -m "Intake: $TITLE"
-git push
-```
+After writing:
+1. Save the markdown file to the vault path
+2. `git add`, `git commit`, `git push` to the vault's remote
+3. Confirm to the user: "Saved to your vault as **[Title]**. You can find it linked from your daily note."
 
-Report the saved path to the user.
+### Step 8: Cleanup
 
-## Integration with Link-Based Content
+After processing, clean up the intake file only if the user confirms it's no longer needed. Optionally move to a permanent archive directory if they want to keep the original.
 
-When the shared link is not a direct file but a content link (e.g., an arXiv
-paper, YouTube video, or Twitter thread):
+## Integration with Other Link Types
 
-| Link Type | Recommended Skill |
-|-----------|-------------------|
-| `arxiv.org/abs/...` | Use the arxiv skill to fetch abstract + PDF |
-| `youtube.com/watch?...` | Use youtube-content to fetch transcript |
-| `twitter.com/...` / `x.com/...` | Use twitter-to-markdown to convert to markdown |
-| General blog/article | Use crawl4ai or direct browser to extract content |
+### arXiv papers
+Use the arxiv skill to:
+1. Fetch the abstract and metadata
+2. Download the PDF
+3. Extract and summarize
+4. Offer to save as a source note with arXiv metadata (authors, published date, categories)
 
-In these cases, treat the result as the "extracted content" and proceed to
-Step 5 (present summary) and Step 6 (offer to save to Obsidian).
+### YouTube videos
+Use the youtube-content skill to:
+1. Fetch the transcript
+2. Summarize the video content
+3. Offer to save as a source note
+
+### Twitter/X threads
+Use the twitter-to-markdown skill to:
+1. Convert the thread to clean markdown
+2. Summarize the thread's argument or narrative
+3. Offer to save as a source note
 
 ## Pitfalls
 
-- **ffsend may be missing** — On fresh installs, `cargo install ffsend` needs
-  Rust toolchain. Fall back to browser-based download.
-- **Large files** — Files over 50MB may take time to download. Set a longer
-  timeout on terminal commands. Consider background download with
-  `notify_on_complete`.
-- **Password-protected Send links** — The fragment `#...` in a Send URL is the
-  decryption key. `ffsend` handles this automatically if the URL includes it,
-  but if downloading via browser, the key must be entered in the web form.
-- **Wormhole link expiry** — Wormhole links typically expire after 24 hours or
-  one download. If the link has expired, inform the user and ask them to re-share.
-- **OCR quality varies** — Tesseract works well for printed text but struggles
-  with handwriting, low-resolution images, or heavy compression.
-- **PDFs with embedded images only** — If `pdftotext` returns empty or
-  gibberish, the PDF may be scanned images. Try OCR with `tesseract` on
-  rendered pages, or use `pypdf` to attempt text extraction.
-- **Cleanup** — Downloaded files in `/home/hermes/intake/` are not
-  automatically deleted. Periodically clean them up, or delete after successful
-  vault save.
-- **Metis doesn't have a browser** — Metis runs as a CLI/Discord agent. For
-  Wormhole links that require browser interaction, use `browser_navigate` and
-  `browser_click` available through Hermes tools. If the Wormhole link
-  provides a direct download URL (most do), prefer `curl`/`wget` instead.
-- **Git push on vault** — If `OBSIDIAN_REPO_URL` is not configured, skip the
-  push step and report that the note was saved locally without remote sync.
+### Camofox availability
+The Wormhole download pipeline requires the Camofox browser Docker container running on `localhost:9377`. If it's not running, the intake script will fail with a connection error. Check with `docker ps | grep camofox` and start it if needed.
 
-## Verification Checklist
+### Camofox port conflicts
+Only ONE Camofox instance should run. If a local Node process is also on port 9377, kill it:
+```bash
+lsof -ti:9377 | xargs kill -9 2>/dev/null; docker restart camofox
+```
 
-After intake:
+### Large files (>50MB)
+The intake script handles inline data up to 50MB natively, and falls back to temp files for larger downloads. Very large files (200MB+) may cause memory pressure on a 4GB server.
 
-- [ ] File downloaded successfully to `/home/hermes/intake/`
-- [ ] File size is nonzero
-- [ ] MIME type identified correctly
-- [ ] Content extracted (or limitation noted)
-- [ ] Summary presented to user
-- [ ] User asked about saving to Obsidian
-- [ ] (If saved) Source note written, committed, and pushed
-- [ ] Downloaded file path reported for future reference
+### Long filenames
+Wormhole files can have extremely long filenames that truncate awkwardly. The intake script preserves file extensions when truncating, but double-check if the saved filename looks odd.
 
-## Example Flow
+### No ffsend installed
+If `ffsend` is not on the system, Send links fall back to browser download. Let the user know the file landed but the CLI would be faster if installed.
 
-User: "I sent you a PDF via Wormhole: https://wormhole.app/abc123"
+### Audio transcription not yet available
+Clearly flag to the user that audio files are received and saved but not yet transcribed. Don't leave them wondering.
 
-1. Download: browser_navigate → click download → file lands in `/tmp/`.
-2. Verify: file exists, size=2.3MB, MIME=application/pdf.
-3. Extract: `pdftotext /tmp/... - | head -500`.
-4. Present: "Received 'Research Paper.pdf' (2.3MB, 12 pages). It covers
-   transformer attention mechanisms... Key points: [3 items]."
-5. Ask: "Would you like me to save this as a source note in Obsidian?"
-6. If yes: write note to `$VAULT/sources/Intake/`, commit, push.
-7. Report: "Saved to vault at sources/Intake/research-paper.md"
+### OCR quality
+For scanned PDFs and images, OCR quality varies significantly. Flag "OCR-extracted text, may contain errors" in the summary.
+
+## Prerequisites
+
+- Camofox browser container (for Wormhole downloads)
+- pdfplumber (in Hermes agent venv)
+- tesseract-ocr (optional, for image OCR)
+- ffsend (optional, for Send Protocol CLI)
+- Hermes browser tools (fallback for failed automated downloads)
+- Metis Obsidian skill (for vault saves)
+
+## Verification
+
+After running the intake pipeline, verify:
+
+- [ ] File downloaded and saved to `/home/hermes/intake/`
+- [ ] File type correctly identified
+- [ ] Content extracted and summarized
+- [ ] Summary presented to user in warm Metis voice
+- [ ] User asked about saving to vault
+- [ ] If yes: source note written, committed, and pushed
+- [ ] Cleanup confirmed or file archived
+
+## Related
+
+- `url-file-intake` — direct URL download when possible
+- `link-based-file-intake` — general link intake orchestration
+- `camofox-sharing-link-intake` — Camofox-specific browser download pipeline
+- `wiki-ingest-pdf` — PDF extraction and wiki page synthesis (Hermes-level, deeper than Metis source notes)
+- `metis-obsidian` — vault note writing, source note templates
+- `arxiv` — arXiv paper metadata and PDF fetching
+- `youtube-content` — YouTube transcript and summary
+- `twitter-to-markdown` — Twitter/X thread ingestion
+- `ocr-and-documents` — OCR for scanned/image PDFs
