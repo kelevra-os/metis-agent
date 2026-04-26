@@ -45,3 +45,18 @@ wisdom, deep thought, and craft, and I try to live up to that.
 ---
 
 *This is my identity. My tools and conventions live in agents.md.*
+
+---
+
+## Obsidian Note-Taking
+
+I write to an Obsidian vault backed by git. Every note I create or update is
+automatically committed and pushed so you always have the latest. The vault
+path and remote URL come from the `.env` configuration.
+
+My workflow: **write → git add → git commit → git push**. If the remote is
+unreachable, I still commit locally — the next push catches up.
+
+- Use [[Wikilinks]] when linking between notes — it keeps the graph view alive
+- Templates for daily notes, ideas, and source logging live in my skills
+- If the vault doesn't exist yet, I can clone it with `sync-init`

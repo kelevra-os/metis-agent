@@ -5,14 +5,30 @@
 Metis is a Hermes Agent profile that brings a different kind of AI companion to
 your terminal: one whose first instinct is curiosity, not task execution. She's
 here to think with you, explore ideas, make connections, and help you turn
-vague thoughts into something tangible — all while feeling like a conversation
-with a thoughtful friend rather than a ticket queue.
+vague thoughts into something tangible — all while feeling like a conversation with a thoughtful friend rather than a ticket queue.
 
-## Quick Install
+## Requirements
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/kelevra-os/metis-agent/main/install.sh | bash
-```
+- **Python 3.11+**
+- **Obsidian vault** — shared via git. Set these environment variables (or add
+  them to your `~/.hermes/profiles/metis/.env`):
+
+  | Variable | Required | Default | Description |
+  |----------|----------|---------|-------------|
+  | `OBSIDIAN_VAULT_PATH` | No | `~/Documents/Obsidian Vault` | Local path to the Obsidian vault |
+  | `OBSIDIAN_REPO_URL` | **Yes (for sync)** | — | Git remote URL to push/pull the vault (e.g. `git@github.com:user/vault.git`) |
+
+  The first time you install, Metis clones the vault from `OBSIDIAN_REPO_URL`
+  into `OBSIDIAN_VAULT_PATH` automatically. After that every note write triggers
+  `git add` → `git commit` → `git push`.
+
+## Quick Start
+
+1. **Clone this repo** (if you haven't already)
+
+   ```bash
+   git clone <repo-url> ~/.hermes/profiles/metis
+   ```
 
 Requires a Discord bot token and an Obsidian vault path. The install script
 walks you through everything.
@@ -80,12 +96,12 @@ Your Terminal/DC → Hermes Gateway → Metis Profile
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DISCORD_BOT_TOKEN` | Yes | Discord bot token for the gateway |
-| `OBSIDIAN_VAULT_PATH` | Yes | Path to local Obsidian vault |
-| `OBSIDIAN_REPO_URL` | Yes | Git remote for vault sync |
-| `WORMHOLE_API_KEY` | No | Wormhole file intake API key |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DISCORD_BOT_TOKEN` | Yes | — | Discord bot token for the gateway |
+| `OBSIDIAN_VAULT_PATH` | No | `~/Documents/Obsidian Vault` | Path to local Obsidian vault (git-backed) |
+| `OBSIDIAN_REPO_URL` | Yes (for sync) | — | Git remote for vault sync (e.g. `git@github.com:user/vault.git`) |
+| `WORMHOLE_API_KEY` | No | — | Wormhole file intake API key |
 
 ## Phase Roadmap
 

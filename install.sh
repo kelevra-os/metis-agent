@@ -192,8 +192,29 @@ ENVFILE
     ok "Written to ${METIS_ENV}"
 fi
 
-# ── Step 6: Gateway setup ────────────────────────────────────
-header "Step 6: Discord Gateway"
+# ── Step 6: Obsidian vault setup ─────────────────────────────
+header "Step 6: Obsidian Vault"
+
+if [ -n "${VAULT_REPO}" ] && [ -n "${VAULT_PATH}" ]; then
+    if [ -d "${VAULT_PATH}/.git" ]; then
+        info "Vault already cloned at ${VAULT_PATH} — pulling latest"
+        (cd "${VAULT_PATH}" && git pull) || warn "git pull failed — check your SSH keys and remote URL"
+    elif [ -d "${VAULT_PATH}" ]; then
+        warn "Directory exists at ${VAULT_PATH} but is not a git repo."
+        info "Run this manually to clone: git clone ${VAULT_REPO} \"${VAULT_PATH}\""
+    else
+        info "Cloning vault from ${VAULT_REPO} → ${VAULT_PATH}"
+        mkdir -p "$(dirname "${VAULT_PATH}")"
+        git clone "${VAULT_REPO}" "${VAULT_PATH}" && ok "Vault cloned" || error "git clone failed — check the URL and your SSH/HTTPS access"
+    fi
+else
+    warn "OBSIDIAN_REPO_URL or OBSIDIAN_VAULT_PATH not set — skipping vault setup"
+    info "You can set these later in ${METIS_ENV} and run:"
+    info "  git clone <repo-url> \"\${OBSIDIAN_VAULT_PATH}\""
+fi
+
+# ── Step 7: Gateway setup ────────────────────────────────────
+header "Step 7: Discord Gateway"
 
 if [ -n "${DISCORD_TOKEN:-}" ]; then
     info "Running: hermes -p metis gateway setup"
