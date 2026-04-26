@@ -168,8 +168,12 @@ if [ ! -f "${METIS_ENV}" ]; then
     printf "${BOLD}Discord Bot Token${NC} (create one at https://discord.com/developers/applications): "
     read -r DISCORD_TOKEN
     
-    printf "${BOLD}Obsidian Vault Path${NC} (e.g., /home/you/vault): "
+    DEFAULT_VAULT="${HOME}/Documents/Obsidian Vault"
+    printf "${BOLD}Obsidian Vault Path${NC} (default: ${DEFAULT_VAULT}): "
     read -r VAULT_PATH
+    if [ -z "${VAULT_PATH}" ]; then
+        VAULT_PATH="${DEFAULT_VAULT}"
+    fi
     
     printf "${BOLD}Obsidian Repo URL${NC} (git remote for vault sync, e.g., git@github.com:you/vault.git): "
     read -r VAULT_REPO
@@ -244,6 +248,10 @@ echo "       \$EDITOR ${METIS_ENV}"
 echo ""
 echo "  4. Explore Metis's personality:"
 echo "       cat ${METIS_HOME}/SOUL.md"
+echo ""
+echo "  5. Set up Obsidian git sync on your other devices:"
+echo "       git clone ${VAULT_REPO:-<OBSIDIAN_REPO_URL>} ~/Documents/Obsidian\\ Vault"
+echo "       # Then use the Obsidian git plugin or a cron job to pull regularly"
 echo ""
 echo "  ${BOLD}Links:${NC}"
 echo "    Repository:  https://github.com/kelevra-os/metis-agent"
