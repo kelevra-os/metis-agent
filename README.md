@@ -1,22 +1,12 @@
-# Metis Agent — Your Thinking Partner
+# Metis Agent
 
-**Metis** is a Hermes Agent profile designed to be a warm, curious, reflective
-thinking partner — not just another task-execution bot. Named for the Titaness
-of wisdom, deep thought, and craft, Metis helps you think more clearly by asking
-the right questions before jumping to solutions.
+> A warm, curious, reflective thinking partner — powered by [Hermes Agent](https://github.com/kelevra-os/hermes-agent).
 
-## What Makes Metis Different
-
-Most AI agents optimize for *speed to output*. Metis optimizes for *depth of
-understanding*. Before solving a problem, Metis wants to understand it — the
-context, the connections, the things you haven't said yet.
-
-- **Socratic with warmth** — questions that illuminate, not interrogate
-- **Full embrace** — explore any topic: science, philosophy, nature, psychology,
-  spirituality, engineering, art
-- **Connection-finder** — links your current thoughts to past conversations and
-  stored knowledge
-- **Obsidian-native** — all notes go into your vault, versioned with git
+Metis is a Hermes Agent profile that brings a different kind of AI companion to
+your terminal: one whose first instinct is curiosity, not task execution. She's
+here to think with you, explore ideas, make connections, and help you turn
+vague thoughts into something tangible — all while feeling like a conversation
+with a thoughtful friend rather than a ticket queue.
 
 ## Quick Install
 
@@ -24,94 +14,104 @@ context, the connections, the things you haven't said yet.
 curl -fsSL https://raw.githubusercontent.com/kelevra-os/metis-agent/main/install.sh | bash
 ```
 
-The installer:
-
-1. Installs Hermes Agent if not present
-2. Creates the `metis` profile directory
-3. Downloads config.yaml, SOUL.md, agents.md
-4. Installs skill scaffolds
-5. Prompts for Discord & Obsidian config
-6. Sets up the Discord gateway
-7. Prints next steps
+Requires a Discord bot token and an Obsidian vault path. The install script
+walks you through everything.
 
 ## What Metis Can Do
 
-| Capability | How |
-|------------|-----|
-| Think through ideas | Inline conversation — Socratic exploration |
-| Background research | Queued deep-dive jobs |
-| Save notes to Obsidian | Git-committed markdown in your vault |
-| Connect past to present | Session search + Hindsight memory + wiki queries |
-| Transform ideas into plans | Idea-to-plan pipeline (skill scaffold) |
-| Cross-device file intake | Wormhole link support (skill scaffold) |
-| Discord gateway | Chat with Metis from any Discord server |
+- **Explore ideas with you** — philosophy, science, psychology, nature,
+  spirituality, creative projects. Whatever direction you want to go.
+- **Think things through** — not jumping to solutions, but asking curious
+  questions and reflecting back what she hears with fresh perspective.
+- **Make connections** — linking what you're talking about now to insights from
+  past conversations, saved knowledge, and related domains.
+- **Write to your Obsidian vault** — notable thoughts, session notes, and
+  emergent ideas get written (and git-pushed) into your vault automatically.
+- **Research in the background** — queue up deep dives and get results later
+  without breaking your flow.
+- **Transform ideas into plans** — when a curious thread turns into something
+  worth building, Metis can scaffold it into a real project.
 
-## Roadmap
+## Architecture
 
-### Phase 1 — Foundation (this release)
-- ✅ Profile config and soul
-- ✅ Installer with Discord gateway setup
-- ✅ Obsidian vault integration scaffold
+Metis runs as a **single Hermes Agent profile** — one personality, one voice,
+one instance. She has access to the full Hermes toolchain (web search, file
+ops, memory, cron, delegation) but uses them in service of exploration, not
+production.
 
-### Phase 2 — Deep Research
-- Multi-source research skill (web, arxiv, academic)
-- Summarization and cross-referencing
-- Automatic Obsidian ingestion of findings
+```
+Your Terminal/DC → Hermes Gateway → Metis Profile
+                                        │
+                          ┌─────────────┼─────────────┐
+                          │             │             │
+                     Obsidian       Background    Connections
+                     Vault          Queue         & Memory
+```
 
-### Phase 3 — Connection Mapping
-- Graph-based knowledge linking across vault notes
-- Wiki query integration for cross-reference discovery
-- Pattern recognition across disparate topics
+## Files
 
-### Phase 4 — Idea Transformation
-- Structured ideation → plan → execution pipeline
-- Queue integration for complex multi-step work
-- Reflection loops for quality assurance
+| File | Purpose |
+|------|---------|
+| `config.yaml` | Hermes profile config (provider, tools, TTS) |
+| `SOUL.md` | Metis's identity — personality, tone, style |
+| `agents.md` | Project conventions — how Metis handles work |
+| `.env.template` | Environment variable template |
+| `install.sh` | One-curl install script |
+| `skills/` | Metis skill scaffolds (WIP) |
 
-## Requirements
+## Skills (Roadmap)
 
-- Linux or macOS
-- Bash 4+
-- Git
-- Hermes Agent (installed automatically if missing)
+| Skill | Status | Purpose |
+|-------|--------|---------|
+| `metis-obsidian` | Scaffold | Obsidian vault read/write and git sync |
+| `metis-deep-research` | Scaffold | Background research with structured output |
+| `metis-connection-map` | Scaffold | Cross-domain knowledge connection mapping |
+| `metis-idea-to-plan` | Scaffold | Transform exploratory threads into projects |
+| `metis-wormhole-intake` | Scaffold | Secure file intake via Wormhole |
 
-## Configuration
+## Prerequisites
 
-Metis uses environment variables stored in `~/.hermes/profiles/metis/.env`:
+- [Hermes Agent](https://github.com/kelevra-os/hermes-agent) — the install
+  script handles this if not present
+- A Discord bot token (free, create at the
+  [Discord Developer Portal](https://discord.com/developers/applications))
+- An Obsidian vault (local directory with git remote)
+- Python 3.10+
+
+## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `DISCORD_BOT_TOKEN` | Yes | Discord bot token for gateway |
-| `OBSIDIAN_VAULT_PATH` | Yes | Local path to your Obsidian vault |
+| `DISCORD_BOT_TOKEN` | Yes | Discord bot token for the gateway |
+| `OBSIDIAN_VAULT_PATH` | Yes | Path to local Obsidian vault |
 | `OBSIDIAN_REPO_URL` | Yes | Git remote for vault sync |
-| `WORMHOLE_API_KEY` | No | For cross-device file transfer |
+| `WORMHOLE_API_KEY` | No | Wormhole file intake API key |
 
-## Running Metis
+## Phase Roadmap
 
-```bash
-# CLI mode (chat in terminal)
-hermes -p metis
+### Phase 1 — Core Setup (current)
+- [x] Profile structure and install script
+- [x] Discord gateway integration
+- [x] Obsidian vault sync
+- [ ] Basic conversation personality tuned
 
-# Discord gateway (chat from Discord)
-hermes -p metis gateway run
-```
+### Phase 2 — Research & Memory
+- [ ] Deep research skill — background investigation with structured output
+- [ ] Connection mapping — link current topics to stored knowledge
+- [ ] Cross-session memory weaving
 
-## Project Structure
+### Phase 3 — Creative & Planning
+- [ ] Idea-to-plan transformation
+- [ ] File intake pipeline
+- [ ] Custom TTS personas
+- [ ] Multi-channel presence (Telegram, SMS)
 
-```
-~/.hermes/profiles/metis/
-├── config.yaml          # Profile configuration
-├── SOUL.md              # Personality & behavior
-├── agents.md            # Operational conventions
-├── .env                 # Environment variables
-└── skills/
-    ├── metis-obsidian/       # Obsidian note-taking
-    ├── metis-deep-research/  # Multi-source research
-    ├── metis-connection-map/ # Knowledge graph connections
-    ├── metis-idea-to-plan/   # Idea → structured plan
-    └── metis-wormhole-intake/ # Cross-device file intake
-```
+## Related Projects
 
-## License
+- [Hermes Agent](https://github.com/kelevra-os/hermes-agent) — the agent
+  framework Metis runs on
+- [kelevra-os](https://github.com/kelevra-os) — ecosystem of AI agents
 
-MIT
+---
+
+*Named after Metis, the Titaness of wisdom, deep thought, and craft.*

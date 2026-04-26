@@ -1,19 +1,22 @@
 # metis-obsidian
 
-Obsidian vault integration for Metis.
+<!-- Scaffold — content coming in future phase. -->
 
-## Status
+## Purpose
 
-🧱 Scaffold — coming in a future phase.
+Read, write, search, and sync notes from Metis's configured Obsidian vault.
+Handles git commit+push for every note written.
 
-## Planned Capabilities
+## When to Use
 
-- Write notes to the configured Obsidian vault path
-- Git commit + push on each note
-- Read/search existing vault notes
-- Link new notes to related existing notes
-- Auto-tagging and frontmatter generation
+- Saving a thread of thought as a permanent note
+- Retrieving past notes during a conversation
+- Syncing vault state after writing
 
-## Configuration
+## Steps
 
-Requires `OBSIDIAN_VAULT_PATH` and `OBSIDIAN_REPO_URL` to be set in the Metis `.env`.
+*To be filled in Phase 2.*
+
+## Pitfalls
+
+*To be filled in Phase 2.*

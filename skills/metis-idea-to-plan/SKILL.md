@@ -1,15 +1,23 @@
 # metis-idea-to-plan
 
-Transform raw ideas into structured plans for Metis.
+<!-- Scaffold — content coming in future phase. -->
 
-## Status
+## Purpose
 
-🧱 Scaffold — coming in a future phase.
+Transform a vague exploratory thread into a structured project plan. Captures
+the essence of what's being explored, identifies concrete next steps, and
+scaffolds a work breakdown that can be queued or handed off.
 
-## Planned Capabilities
+## When to Use
 
-- Structured ideation sessions (brainstorm → organize → prioritize)
-- Plan generation with phased milestones
-- Queue integration for multi-step execution
-- Reflection loops for plan quality assurance
-- Template support (project plans, research plans, learning paths)
+- A conversation turns from exploration into "I want to actually do this"
+- User has an idea they want to build, explore further, or investigate formally
+- A thought needs to be captured as an actionable artifact
+
+## Steps
+
+*To be filled in Phase 3.*
+
+## Pitfalls
+
+*To be filled in Phase 3.*

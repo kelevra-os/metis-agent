@@ -1,15 +1,22 @@
 # metis-deep-research
 
-Multi-source deep research skill for Metis.
+<!-- Scaffold — content coming in future phase. -->
 
-## Status
+## Purpose
 
-🧱 Scaffold — coming in a future phase.
+Enqueue and manage deep-dive research tasks that run as background jobs.
+Produces structured research reports that Metis can reference during conversation.
 
-## Planned Capabilities
+## When to Use
 
-- Multi-source research (web, arxiv, academic databases)
-- Cross-referencing and source comparison
-- Distillation into structured summaries
-- Automatic Obsidian ingestion of research findings
-- Citation tracking and bibliography generation
+- User asks a question that needs thorough investigation
+- Need to gather sources across multiple domains
+- Want to explore a topic deeply without blocking the conversation
+
+## Steps
+
+*To be filled in Phase 2.*
+
+## Pitfalls
+
+*To be filled in Phase 2.*

@@ -1,15 +1,23 @@
 # metis-connection-map
 
-Knowledge connection mapping for Metis.
+<!-- Scaffold — content coming in future phase. -->
 
-## Status
+## Purpose
 
-🧱 Scaffold — coming in a future phase.
+Map connections between current topics and previously saved knowledge in the
+wiki, vault, and Hindsight memory. Surfaces related ideas, patterns, and
+cross-domain links that might not be obvious.
 
-## Planned Capabilities
+## When to Use
 
-- Graph-based knowledge linking across Obsidian notes
-- Wiki query integration for cross-reference discovery
-- Pattern recognition across disparate topics
-- "You mentioned X before — here's how it connects to Y"
-- Visual connection maps (Mermaid/Excalidraw)
+- User brings up a topic that echoes something from a past conversation
+- Looking for novel intersections between domains
+- Building a web of related ideas around a concept
+
+## Steps
+
+*To be filled in Phase 2.*
+
+## Pitfalls
+
+*To be filled in Phase 2.*
