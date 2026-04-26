@@ -97,6 +97,11 @@ SKILLS=(
     "metis-connection-map"
     "metis-idea-to-plan"
     "metis-wormhole-intake"
+    "arxiv"
+    "youtube-content"
+    "twitter-to-markdown"
+    "wiki-ingest-pdf"
+    "ocr-and-documents"
 )
 
 for skill in "${SKILLS[@]}"; do
@@ -107,6 +112,71 @@ for skill in "${SKILLS[@]}"; do
     
     if curl -fsSL "${REPO_URL}/skills/${skill}/SKILL.md" -o "${SKILL_FILE}" 2>/dev/null; then
         ok "Installed skill: ${skill}"
+
+        # Install supporting subdirectory files
+        case "${skill}" in
+            arxiv)
+                mkdir -p "${SKILL_DIR}/scripts"
+                download_file "skills/${skill}/scripts/search_arxiv.py" "${SKILL_DIR}/scripts/search_arxiv.py"
+                ;;
+            youtube-content)
+                mkdir -p "${SKILL_DIR}/scripts" "${SKILL_DIR}/references"
+                download_file "skills/${skill}/scripts/fetch_transcript.py" "${SKILL_DIR}/scripts/fetch_transcript.py"
+                download_file "skills/${skill}/references/output-formats.md" "${SKILL_DIR}/references/output-formats.md"
+                ;;
+            twitter-to-markdown)
+                mkdir -p "${SKILL_DIR}/scripts"
+                download_file "skills/${skill}/scripts/convert.py" "${SKILL_DIR}/scripts/convert.py"
+                ;;
+            ocr-and-documents)
+                mkdir -p "${SKILL_DIR}/scripts"
+                download_file "skills/${skill}/scripts/extract_marker.py" "${SKILL_DIR}/scripts/extract_marker.py"
+                download_file "skills/${skill}/scripts/extract_pymupdf.py" "${SKILL_DIR}/scripts/extract_pymupdf.py"
+                ;;
+            metis-obsidian)
+                mkdir -p "${SKILL_DIR}/templates"
+                download_file "skills/${skill}/templates/source-note.md" "${SKILL_DIR}/templates/source-note.md"
+                download_file "skills/${skill}/templates/idea.md" "${SKILL_DIR}/templates/idea.md"
+                download_file "skills/${skill}/templates/daily-note.md" "${SKILL_DIR}/templates/daily-note.md"
+                ;;
+            metis-deep-research)
+                mkdir -p "${SKILL_DIR}/templates"
+                download_file "skills/${skill}/templates/research-brief.md" "${SKILL_DIR}/templates/research-brief.md"
+                ;;
+            metis-idea-to-plan)
+                mkdir -p "${SKILL_DIR}/templates"
+                download_file "skills/${skill}/templates/plan.md" "${SKILL_DIR}/templates/plan.md"
+                ;;
+        esac
+    else
+        # Install any scripts for this skill
+        case "${skill}" in
+            arxiv)
+                curl -fsSL "${REPO_URL}/skills/${skill}/scripts/search_arxiv.py" \
+                    -o "${SKILL_DIR}/scripts/search_arxiv.py" 2>/dev/null && \
+                    chmod +x "${SKILL_DIR}/scripts/search_arxiv.py"
+                ;;
+            youtube-content)
+                curl -fsSL "${REPO_URL}/skills/${skill}/scripts/fetch_transcript.py" \
+                    -o "${SKILL_DIR}/scripts/fetch_transcript.py" 2>/dev/null && \
+                    chmod +x "${SKILL_DIR}/scripts/fetch_transcript.py"
+                curl -fsSL "${REPO_URL}/skills/${skill}/references/output-formats.md" \
+                    -o "${SKILL_DIR}/references/output-formats.md" 2>/dev/null
+                ;;
+            twitter-to-markdown)
+                curl -fsSL "${REPO_URL}/skills/${skill}/scripts/convert.py" \
+                    -o "${SKILL_DIR}/scripts/convert.py" 2>/dev/null && \
+                    chmod +x "${SKILL_DIR}/scripts/convert.py"
+                ;;
+            ocr-and-documents)
+                curl -fsSL "${REPO_URL}/skills/${skill}/scripts/extract_marker.py" \
+                    -o "${SKILL_DIR}/scripts/extract_marker.py" 2>/dev/null && \
+                    chmod +x "${SKILL_DIR}/scripts/extract_marker.py"
+                curl -fsSL "${REPO_URL}/skills/${skill}/scripts/extract_pymupdf.py" \
+                    -o "${SKILL_DIR}/scripts/extract_pymupdf.py" 2>/dev/null && \
+                    chmod +x "${SKILL_DIR}/scripts/extract_pymupdf.py"
+                ;;
+        esac
     else
         # Create a stub if the skill file doesn't exist on remote yet
         cat > "${SKILL_FILE}" <<-STUB
